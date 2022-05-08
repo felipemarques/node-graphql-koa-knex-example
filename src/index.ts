@@ -6,6 +6,9 @@ import {
     ApolloServerPluginLandingPageGraphQLPlayground 
 } from 'apollo-server-core';
 
+import * as dotenv from "dotenv";
+dotenv.config({ path: __dirname+'/../.env' });
+
 const PORT = process.env.PORT || 3000;
 
 export async function createKoaServer(): Promise<Koa> {
