@@ -7,9 +7,15 @@ export async function up(knex: Knex): Promise<void> {
       table.increments('id');
       table.uuid('uid');
       table.string('name');
-      table.string('description');
+      table.text('description');
       table.float('latitude');
       table.float('longitude');
+      table.string('planet_code')
+      table.foreign('planet_code')
+        .references('planets.code')
+        .onUpdate('CASCADE')
+        .onDelete('CASCADE');
+      table.primary(['id'])
     },
   );
 }
