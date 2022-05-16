@@ -4,14 +4,14 @@ services:
     container_name: postgres
     image: postgres:10.4
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes: 
       - ./postgresdata:/var/lib/postgresql/data
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: newPassword
-      POSTGRES_DB: planets
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
   pgadmin:
     container_name: pgadmin
     image: dpage/pgadmin4:4.18
