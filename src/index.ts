@@ -1,14 +1,19 @@
-import Koa from 'koa';
-import KoaRouter from 'koa-router';
-
-import { ApolloServer, gql} from 'apollo-server-koa';
-import { 
-    ApolloServerPluginLandingPageGraphQLPlayground 
-} from 'apollo-server-core';
-
-import * as dotenv from "dotenv";
+import dotenv from "dotenv";
 dotenv.config({ path: __dirname+'/../.env' });
 
+import "reflect-metadata";
+import database from './database';
+import Koa from 'koa';
+import KoaRouter from 'koa-router';
+import { buildSchema } from 'type-graphql'
+import { ApolloServer, gql} from 'apollo-server-koa';
+import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
+import PlanetResolver from './resolvers/PlanetResolver';
+import SpaceCenterResolver from "./resolvers/SpaceCenterResolver";
+import FlightResolver from "./resolvers/FlightResolver";
+import BookingResolver from "./resolvers/BookingResolver";
+
+const env = process.env.NODE_ENV || 'development';
 const PORT = process.env.PORT || 3000;
 
 export async function createKoaServer(): Promise<Koa> {
@@ -17,7 +22,7 @@ export async function createKoaServer(): Promise<Koa> {
 
     const server = await createApolloServer(app)
 
-    router.get("/healthz", (ctxt:any) => {
+    router.get("/status", (ctxt:any) => {
         ctxt.body = { success: true };
     });
 
@@ -28,64 +33,57 @@ export async function createKoaServer(): Promise<Koa> {
     app.use(router.allowedMethods());
 
     app.listen(PORT)
-    console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+    console.log(`🚀 Server ready at http://localhost:${PORT}`);
+    console.log(`🚀 Server GraphQL ready at http://localhost:${PORT}${server.graphqlPath}`);
 
     return app
 }
 
 export async function createApolloServer(app: Koa):Promise<ApolloServer> {
   
-    const typeDefs = gql`
-        type Example {
-            message: String
-        }
-    
-        type Query {
-            queryExample: Example
-        }
-    
-        type Mutation {
-            mutationExample: Example
-        }
-    `;
-
-    const resolvers = {
-        Query: {
-            queryExample: (parent: any, args: any, context: any) => {
-              return {
-                message: "This is the message from the query resolver.",
-              };
-            },
-          },
-          Mutation: {
-            mutationExample: (parent: any, args: any, context: any) => {
-              console.log("Perform mutation here before responding.");
-      
-              return {
-                message: "This is the message from the mutation resolver.",
-              };
-            },
-          },
-    }
-
     const errorHandler = (err: Error) => {
         console.log("Error while running resolver", {
           error: err
         });
       
-        // Hide all internals by default
-        // Change that when we introduce custom error instances
-        return new Error("Internal server error");
+        if (env === 'production') {
+            return new Error("Internal server error");
+        }
+
+        if (process.env.APP_DEBUG == "true") {
+            return err
+        }
+
+        return new Error(err.message);
     };
 
+    const schema = async () => {
+        return await buildSchema({
+            resolvers: [
+                PlanetResolver,
+                SpaceCenterResolver,
+                BookingResolver,
+                FlightResolver,
+            ]
+        })
+    }
+
     const server = new ApolloServer({
-        typeDefs,
-        resolvers,
         csrfPrevention: true,
         plugins: [
             ApolloServerPluginLandingPageGraphQLPlayground
         ],
-        formatError: errorHandler
+        formatError: errorHandler,
+        schema: await schema(),
+        context: ({ req, res }: any) => {
+            return {
+              req,
+              res,
+              db: database,
+        //       //dataloaders,
+        //       //repositories,
+            }
+        }
     });
 
     await server.start()

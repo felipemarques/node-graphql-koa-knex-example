@@ -1,14 +1,21 @@
 {
   "compilerOptions": {
-    "target": "es5",                          
+    "target": "es2018",                           
     "module": "commonjs",                    
-    "lib": ["es6"],                     
+    "lib": ["es2018", "esnext.asynciterable", "dom"],
     "allowJs": true,
     "outDir": "build",                          
     "rootDir": "src",
-    "strict": true,         
+    "strict": true,    
+    "strictPropertyInitialization": false,     
     "noImplicitAny": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true
-  }
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,        
+    "emitDecoratorMetadata": true,     
+    "skipLibCheck": true,                    
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"],  
+  },
+  "exclude": ["node_modules, src/tests"]
 }
